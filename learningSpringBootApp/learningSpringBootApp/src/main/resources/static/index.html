@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 45%;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+
+        .edit {
+            background: orange;
+            color: white;
+            border: none;
+        }
+
+        .delete {
+            background: red;
+            color: white;
+            border: none;
+        }
+
+        .add {
+            background: green;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Patient Management CRUD</h2>
+
+    <input type="hidden" id="id">
+    <input type="text" id="name" placeholder="Patient Name">
+    <input type="text" id="disease" placeholder="Disease">
+    <br>
+    <button class="add" onclick="savePatient()">Save Patient</button>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Disease</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="patientTable"></tbody>
+    </table>
+</div>
+
+<script>
+    const API = "http://localhost:8081/patients";
+
+    function loadPatients() {
+        fetch(API)
+            .then(res => res.json())
+            .then(data => {
+                patientTable.innerHTML = "";
+                data.forEach(p => {
+                    patientTable.innerHTML += `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${p.disease}</td>
+                            <td>
+                                <button class="edit" onclick="editPatient(${p.id}, '${p.name}', '${p.disease}')">Edit</button>
+                                <button class="delete" onclick="deletePatient(${p.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                });
+            });
+    }
+
+    function savePatient() {
+        const id = document.getElementById("id").value;
+        const name = document.getElementById("name").value;
+        const disease = document.getElementById("disease").value;
+
+        const patient = { name, disease };
+
+        if (id === "") {
+            // CREATE
+            fetch(API, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(patient)
+            }).then(clearForm);
+        } else {
+            // UPDATE
+            fetch(API + "/" + id, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(patient)
+            }).then(clearForm);
+        }
+    }
+
+    function editPatient(id, name, disease) {
+        document.getElementById("id").value = id;
+        document.getElementById("name").value = name;
+        document.getElementById("disease").value = disease;
+    }
+
+    function deletePatient(id) {
+        fetch(API + "/" + id, { method: "DELETE" })
+            .then(loadPatients);
+    }
+
+    function clearForm() {
+        document.getElementById("id").value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("disease").value = "";
+        loadPatients();
+    }
+
+    loadPatients();
+</script>
+
+</body>
+</html>
